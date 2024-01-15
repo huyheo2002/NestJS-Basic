@@ -13,4 +13,8 @@ export class User {
 
     @Column()
     public password: string;
+
+    // Thêm trường refreshTokens
+    @Column({ type: 'simple-array', nullable: true })
+    refreshTokens: string[];
 }

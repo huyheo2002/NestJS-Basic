@@ -13,21 +13,18 @@ import { JwtStrategy } from "./strategies/jwt.strategy";
 
 @Module({
     imports: [TypeOrmModule.forFeature([User]), PassportModule, JwtModule.register({
-        // secret: process.env.JWT_SECRET,
-        secret: process.env.JWT_SECRET || "defaultSecret",
+        secret: process.env.JWT_SECRET,
         signOptions: {
-            // expiresIn: process.env.EXPIRESIN
-            expiresIn: process.env.EXPIRESIN ||"3600s"
-        }
-
-        // secret: "defaultSecret",
-        // signOptions: {
-        //     expiresIn: "3600s"
-        // }
+            expiresIn: process.env.EXPIRESIN
+        }        
     })],
     controllers: [AuthController],
     providers: [AuthService, PassportlocalStrategy, UserService, JwtStrategy],
     exports: [AuthService]
 })
 
-export class AuthModule {}
+export class AuthModule {
+    constructor() {
+        console.log("JWT_SECRET:", process.env.JWT_SECRET || "defaultSecret");
+    }
+}

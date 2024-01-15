@@ -1,4 +1,4 @@
-import { Controller, Post, Request, UseGuards, Body, Get } from "@nestjs/common";
+import { Controller, Post, Request, UseGuards, Body, Get, HttpException } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { CreateUserDto } from "src/user/dto/create-user.dto";
 import { UserService } from "src/user/user.service";
@@ -6,18 +6,18 @@ import { AuthGuard } from "@nestjs/passport";
 
 @Controller("auth")
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+    constructor(private readonly authService: AuthService) { }
 
-    @Get()
-    @UseGuards(AuthGuard("local"))
-    getHello(@Request() req): string {
-        // console.log("req", req);
-        return this.authService.generateToken(req.user);
-    }
+    // @Get()
+    // @UseGuards(AuthGuard("local"))
+    // getHello(@Request() req): string {
+    //     // console.log("req", req);
+    //     // return this.authService.generateToken(req.user);
+    // }
 
     @Get("/test-jwt")
     @UseGuards(AuthGuard("jwt"))
-    testJwt() : string {
+    testJwt(): string {
         return "this is jwt"
     }
 
@@ -28,21 +28,28 @@ export class AuthController {
 
     @Post("/login")
     @UseGuards(AuthGuard("local"))
-    Login(@Request() req): string {
-        // authentication complete :V
-        // return this.authService.login();
+    async login(@Request() req): Promise<{ accessToken: string, refreshToken: string }> {
+        try {
+            // username = email
+            const { accessToken, refreshToken } = await this.authService.login(req.user.username, req.user.password);
 
-        // authorization
-        return this.authService.generateToken(req.user);
+            return { accessToken, refreshToken };
+        } catch (error) {
+            throw new HttpException(error.message, error.status);
+        }
     }
 
-    // @Post("/logout")
-    // logout() {
-    //     return this.authService.logout();
-    // }
+    @Post("/refresh")
+    async refreshToken(@Body() { refreshToken }: { refreshToken: string }): Promise<{ accessToken: string, refreshToken: string }> {
+        const tokens = await this.authService.refreshToken(refreshToken);
+        return tokens;
+    }    
 
-    // @Post("/refresh")
-    // refreshToken() {
-    //     return this.authService.refreshToken();
-    // }
+    @Post("/logout")
+    @UseGuards(AuthGuard("jwt"))
+    async logout(@Request() req): Promise<{ message: string }> {
+        const user = await this.authService.validateUser(req.user.email);
+        await this.authService.logout(user);
+        return { message: "Logout successful" };
+    }
 }
