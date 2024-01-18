@@ -11,6 +11,7 @@ export class UserController {
 
   @Get()
   findAll() {
+    // return "hello";
     return this.userService.findAll();
   }
 

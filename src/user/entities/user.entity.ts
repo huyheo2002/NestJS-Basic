@@ -1,18 +1,22 @@
+import { Roles } from "src/utils/common/user.roles.enum";
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
-    public id: number;
+    id: number;
 
     @Column()
-    public name: string;
+    name: string;
 
     @Column({ unique: true })
-    public email: string;
+    email: string;
 
     @Column()
-    public password: string;
+    password: string;
+
+    @Column({type: "enum", enum: Roles, array:true, default: [Roles.USER]})
+    roles: Roles[];
 
     // Thêm trường refreshTokens
     @Column({ type: 'simple-array', nullable: true })

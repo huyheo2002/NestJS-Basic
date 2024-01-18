@@ -13,6 +13,7 @@ async function bootstrap() {
 
   const logger = new Logger();
   app.useLogger(logger);
+  app.setGlobalPrefix("api/v1");
 
   // Đăng ký HttpExceptionFilter làm global filter
   // app.useGlobalFilters(new HttpExceptionFilter());
