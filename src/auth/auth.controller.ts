@@ -3,6 +3,8 @@ import { AuthService } from "./auth.service";
 import { CreateUserDto } from "src/user/dto/create-user.dto";
 import { UserService } from "src/user/user.service";
 import { AuthGuard } from "@nestjs/passport";
+import RegisterDto from "./dto/register.dto";
+import { User } from "src/user/entities/user.entity";
 
 @Controller("auth")
 export class AuthController {
@@ -43,7 +45,12 @@ export class AuthController {
     async refreshToken(@Body() { refreshToken }: { refreshToken: string }): Promise<{ accessToken: string, refreshToken: string }> {
         const tokens = await this.authService.refreshToken(refreshToken);
         return tokens;
-    }    
+    }
+
+    @Post("/register")
+    async register(@Body() body: RegisterDto): Promise<{ user: User }> {
+        return { user: await this.authService.register(body) }
+    }
 
     @Post("/logout")
     @UseGuards(AuthGuard("jwt"))

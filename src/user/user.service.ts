@@ -27,12 +27,14 @@ export class UserService {
     }
   }
 
-  async getByEmail(email: string): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { email } });
+  async findByEmail(email: string): Promise<User> {
+    // const user = await this.usersRepository.findOne({ where: { email } });
+    const user = await this.usersRepository.findOneBy({ email });
+    // console.log("user findByEmail services", user);
     if (user) {
       return user;
     }
-    throw new HttpException('User with this email does not exist', HttpStatus.NOT_FOUND);
+    // throw new HttpException('User with this email does not exist', HttpStatus.NOT_FOUND);
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -56,5 +58,9 @@ export class UserService {
 
   async remove(id: number): Promise<void> {
     await this.usersRepository.delete(id);
+  }
+
+  getRepository(): Repository<User> {
+    return this.usersRepository;
   }
 }

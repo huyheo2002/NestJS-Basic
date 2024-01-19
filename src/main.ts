@@ -4,7 +4,7 @@ import * as path from 'path';
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 import { AppModule } from './app.module';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './utils/filters/HttpException.filter';
 
 async function bootstrap() {
@@ -14,6 +14,8 @@ async function bootstrap() {
   const logger = new Logger();
   app.useLogger(logger);
   app.setGlobalPrefix("api/v1");
+
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true}));
 
   // Đăng ký HttpExceptionFilter làm global filter
   // app.useGlobalFilters(new HttpExceptionFilter());

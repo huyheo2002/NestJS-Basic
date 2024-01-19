@@ -15,12 +15,12 @@ export class UserController {
     return this.userService.findAll();
   }
 
-  @UseFilters(HttpExceptionFilter)
+  // @UseFilters(HttpExceptionFilter)
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const user = await this.userService.findOne(+id);
   
-    console.log("user", user);
+    // console.log("user", user);
     if (!user) {
       return; // Return early if user is not found
     }
@@ -29,10 +29,11 @@ export class UserController {
   }
 
   @Get('/email/:email')
-  async getByEmail(@Param('email') email: string) {
+  async findByEmail(@Param('email') email: string) {
     try {
-      const user = await this.userService.getByEmail(email);
+      const user = await this.userService.findByEmail(email);
 
+      // console.log("findByEmail controller user", user);
       if(user) {
         return user;
       } else {

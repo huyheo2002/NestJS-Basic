@@ -3,6 +3,8 @@ import { UserService } from "src/user/user.service";
 import { JwtService } from "@nestjs/jwt";
 import { User } from "src/user/entities/user.entity";
 import { CreateUserDto } from "src/user/dto/create-user.dto";
+import RegisterDto from "./dto/register.dto";
+import { hash } from "bcrypt";
 
 @Injectable({})
 export class AuthService {
@@ -22,7 +24,7 @@ export class AuthService {
     }
 
     async validateUser(email: string) {
-        const user = await this.userService.getByEmail(email);
+        const user = await this.userService.findByEmail(email);
 
         if (!user) {
             throw new HttpException("Invalid Token", HttpStatus.UNAUTHORIZED)
@@ -31,18 +33,23 @@ export class AuthService {
         return user;
     }
 
-    async register(userDto: CreateUserDto) {
-        const user = await this.userService.create(userDto);
+    async register(userDto: RegisterDto): Promise<User> {
+        console.log("userDto.email", userDto.email);
+        const userExits = await this.userService.findByEmail(userDto.email);
+        console.log("register userExits", userExits)
+        userDto.password = await hash(userDto.password, 10);
 
-        const token = this.generateToken(user);
-        return {
-            email: user.email,
-            ...token,
+        if(userExits) {
+            throw new HttpException("Email is not avaiable", HttpStatus.UNAUTHORIZED)
         }
+        
+        let user = await this.userService.create(userDto);        
+        
+        return await this.userService.getRepository().save(user);
     }
 
     async login(username: string, password: string): Promise<{ accessToken: string, refreshToken: string }> {
-        const user = await this.userService.getByEmail(username);
+        const user = await this.userService.findByEmail(username);
 
         if (!user) {
             throw new HttpException("User not found", HttpStatus.NOT_FOUND);
@@ -66,7 +73,7 @@ export class AuthService {
             const decoded = this.jwtService.verify(refreshToken);
 
             // Lấy thông tin user từ decoded data
-            const user = await this.userService.getByEmail(decoded.data.email);
+            const user = await this.userService.findByEmail(decoded.data.email);
 
             if (!user) {
                 throw new HttpException("User not found", HttpStatus.NOT_FOUND);
