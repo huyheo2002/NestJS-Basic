@@ -20,9 +20,7 @@ export class UserService {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (user) {
       return user;
-    } else {
-      // Bạn có thể quyết định xử lý ngoại lệ ở đây nếu muốn
-      // throw new UserNotFoundException('User not found', HttpStatus.NOT_FOUND);
+    } else {      
       return null;
     }
   }

@@ -5,6 +5,7 @@ import { UserService } from "src/user/user.service";
 import { AuthGuard } from "@nestjs/passport";
 import RegisterDto from "./dto/register.dto";
 import { User } from "src/user/entities/user.entity";
+import LogInDto from "./dto/login.dto";
 
 @Controller("auth")
 export class AuthController {
@@ -23,22 +24,11 @@ export class AuthController {
         return "this is jwt"
     }
 
-    // @Post("/local/signup")
-    // signupLocal() {
-    //     return this.authService.signupLocal();
-    // }
-
     @Post("/login")
-    @UseGuards(AuthGuard("local"))
-    async login(@Request() req): Promise<{ accessToken: string, refreshToken: string }> {
-        try {
-            // username = email
-            const { accessToken, refreshToken } = await this.authService.login(req.user.username, req.user.password);
+    async login(@Body() userLogInDto: LogInDto): Promise<{ accessToken: string, refreshToken: string }> {
+        const { accessToken, refreshToken } = await this.authService.login(userLogInDto);        
 
-            return { accessToken, refreshToken };
-        } catch (error) {
-            throw new HttpException(error.message, error.status);
-        }
+        return { accessToken, refreshToken };
     }
 
     @Post("/refresh")
