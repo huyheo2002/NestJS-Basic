@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -50,8 +50,21 @@ export class UserService {
     user.email = updateUserDto.email;
     user.password = updateUserDto.password;
     user.id = id;
-
+    
     return await this.usersRepository.save(user);
+  }
+
+  async updateToken(id: number, refreshToken: string): Promise<void> {
+    let user = await this.findOne(id);
+    if (!user) {
+      throw new BadRequestException("sai sai r")
+    }
+    if (!user.refreshTokens) {
+      user.refreshTokens = [];
+    }
+    user.refreshTokens.push(refreshToken);
+    
+    await this.usersRepository.save(user);
   }
 
   async remove(id: number): Promise<void> {

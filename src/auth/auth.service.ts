@@ -1,4 +1,4 @@
-import { Injectable, HttpStatus, HttpException } from "@nestjs/common";
+import { Injectable, HttpStatus, HttpException, BadRequestException, UnauthorizedException } from "@nestjs/common";
 import { UserService } from "src/user/user.service";
 import { JwtService } from "@nestjs/jwt";
 import { User } from "src/user/entities/user.entity";
@@ -13,8 +13,8 @@ export class AuthService {
     constructor(private readonly userService: UserService, private readonly jwtService: JwtService) { }
 
     generateToken(payload: User): { accessToken: string, refreshToken: string } {
-        const accessToken = sign({ data: payload }, process.env.JWT_SECRET, { expiresIn: process.env.EXPIRESIN });
-        const refreshToken = sign({ data: payload, refreshToken: true }, process.env.JWT_SECRET, { expiresIn: process.env.EXPIRESIN });
+        const accessToken = sign({ sub: payload.id, name: payload.name, role: payload.roles }, process.env.JWT_SECRET, { expiresIn: process.env.EXPIRESIN });
+        const refreshToken = sign({ sub: payload.id }, process.env.JWT_SECRET, { expiresIn: process.env.EXPIRESIN });
 
         return { accessToken, refreshToken };
     }
@@ -49,22 +49,21 @@ export class AuthService {
         console.log("login services", userDto);
         const userExits = await this.userService.getRepository().createQueryBuilder("user").addSelect("user.password").where("user.email=:email", { email: userDto.email }).getOne();
         if (!userExits) {
-            throw new HttpException("Bad credentials", HttpStatus.BAD_REQUEST)
+            throw new BadRequestException("Bad credentials user not found")
         }
 
         const matchPassword = await compare(userDto.password, userExits.password);
         if (!matchPassword) {
-            throw new HttpException("Bad credentials", HttpStatus.BAD_REQUEST)
+            throw new BadRequestException("Bad credentials user fail password")
         }
 
         const { accessToken, refreshToken } = this.generateToken(userExits);
-        if (userExits && refreshToken) {
-            userExits.refreshTokens = userExits.refreshTokens || [];
-            userExits.refreshTokens.push(refreshToken);
-            await this.userService.update(userExits.id, userExits);
+        console.log("refreshToken login", refreshToken);
+        if (refreshToken) {
+            await this.userService.updateToken(userExits.id, refreshToken);
         }
 
-        delete userExits.password;
+        // delete userExits.password;
         // return {userExits, accessToken, refreshToken};
         return { accessToken, refreshToken };
 
@@ -75,7 +74,10 @@ export class AuthService {
             const decoded = this.jwtService.verify(refreshToken);
 
             // Lấy thông tin user từ decoded data
-            const user = await this.userService.findByEmail(decoded.data.email);
+            if (!(typeof decoded == 'object' && 'sub' in decoded)) {
+                throw new UnauthorizedException("Invalid Token");
+            }
+            const user = await this.userService.findOne(decoded.sub);
 
             if (!user) {
                 throw new HttpException("User not found", HttpStatus.NOT_FOUND);
@@ -85,8 +87,6 @@ export class AuthService {
             if (!user.refreshTokens || !user.refreshTokens.includes(refreshToken)) {
                 throw new HttpException("Invalid Refresh Token", HttpStatus.UNAUTHORIZED);
             }
-
-            // Xóa refresh token khỏi danh sách
             user.refreshTokens = user.refreshTokens.filter(token => token !== refreshToken);
             await this.userService.update(user.id, user);
 
@@ -94,6 +94,9 @@ export class AuthService {
             const tokens = this.generateToken(user);
 
             return { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
+
+            // Xóa refresh token khỏi danh sách
+            // Xoá token cũ, thay bằng token mới
         } catch (error) {
             throw new HttpException("Invalid Refresh Token", HttpStatus.UNAUTHORIZED);
         }

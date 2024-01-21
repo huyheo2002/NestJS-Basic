@@ -1,14 +1,20 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, ParseIntPipe, UsePipes, ValidationPipe, HttpStatus, UseFilters, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, ParseIntPipe, UsePipes, ValidationPipe, HttpStatus, UseFilters, Res, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { HttpExceptionFilter } from 'src/utils/filters/HttpException.filter';
 import { UserNotFoundException } from './exceptions/UserNotFound.exception';
+import { AuthorizeRoles } from 'src/utils/decorators/authorize-roles.decorator';
+import { Roles } from 'src/utils/common/user.roles.enum';
+import { AuthenticationGuard } from 'src/utils/guards/authentication.guard';
+import { AuthorizeGuard } from 'src/utils/guards/authorization.guard';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) { }
 
+  // @AuthorizeRoles(Roles.USER)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
   @Get()
   findAll() {
     // return "hello";

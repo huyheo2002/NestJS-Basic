@@ -6,6 +6,8 @@ import { AuthGuard } from "@nestjs/passport";
 import RegisterDto from "./dto/register.dto";
 import { User } from "src/user/entities/user.entity";
 import LogInDto from "./dto/login.dto";
+import { CurrentUser } from "src/utils/decorators/current-user.decorator";
+import { AuthenticationGuard } from "src/utils/guards/authentication.guard";
 
 @Controller("auth")
 export class AuthController {
@@ -48,5 +50,11 @@ export class AuthController {
         const user = await this.authService.validateUser(req.user.email);
         await this.authService.logout(user);
         return { message: "Logout successful" };
+    }
+
+    @UseGuards(AuthenticationGuard)
+    @Get("/check-user")
+    getCurrentUser(@CurrentUser() currentUser: User) {
+        return currentUser;
     }
 }
